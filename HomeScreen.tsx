@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase/firebaseConfig'; // Importando o auth
 
@@ -19,12 +19,8 @@ const HomeScreen = ({ navigation }: any) => {
       {/* Botão para Cadastro */}
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('Cadastro')} // Redireciona para a tela de cadastro
+        onPress={() => navigation.navigate('CadastroScreen')} // Redireciona para a tela de cadastro
       >
-        {/* <Image
-          source={require('./assets/icons/profile.png')} // Caminho para o ícone de perfil
-          style={styles.icon}
-        /> */}
         <Text style={styles.buttonText}>Cadastro</Text>
       </TouchableOpacity>
 
@@ -33,10 +29,6 @@ const HomeScreen = ({ navigation }: any) => {
         style={styles.button}
         onPress={() => navigation.navigate('RegistreSeuTreino')} // Redireciona para a tela de treino
       >
-        {/* <Image
-          source={require('./assets/icons/halteres.png')} // Caminho para o ícone de treino
-          style={styles.icon}
-        /> */}
         <Text style={styles.buttonText}>Registre seu treino</Text>
       </TouchableOpacity>
 
@@ -45,10 +37,6 @@ const HomeScreen = ({ navigation }: any) => {
         style={styles.button}
         onPress={() => navigation.navigate('JiuJitsu')} // Redireciona para a tela de Jiu Jitsu
       >
-        {/* <Image
-          source={require('./assets/icons/judo.png')} // Caminho para o ícone de Jiu Jitsu
-          style={styles.icon}
-        /> */}
         <Text style={styles.buttonText}>Jiu Jitsu</Text>
       </TouchableOpacity>
 

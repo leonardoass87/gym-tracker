@@ -1,22 +1,38 @@
 import React, { useState } from 'react';
-import { TextInput, Button, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { TextInput, Button, View, Text, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form'; // Importando react-hook-form
-import InputMask from 'react-input-mask'; // Para aplicar a máscara no campo de celular
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import InputMask from 'react-input-mask'; // Para aplicar a máscara nos campos
 import { auth } from './firebase/firebaseConfig'; // Importando o auth do Firebase
+import { getFirestore, doc, setDoc } from 'firebase/firestore'; // Importando Firestore para armazenar dados adicionais
+
+const db = getFirestore();
 
 export default function CadastroScreen({ navigation }: any) {
-  const { control, handleSubmit, setValue, getValues } = useForm();
+  const { control, handleSubmit } = useForm();
   const [error, setError] = useState('');
 
-  // Função de cadastro
-  const handleSignup = async (data: any) => {
+  // Função para completar o cadastro
+  const handleCompleteRegistration = async (data: any) => {
     try {
-      const { email, password, fullName, birthDate, address, phone, emergencyPhone } = data;
-      await createUserWithEmailAndPassword(auth, email, password);
-      alert('Cadastro bem-sucedido!');
-      // Você pode redirecionar o usuário para a Home ou outra página após o cadastro
-      navigation.navigate('Home');
+      console.log('Dados do cadastro:', data); // Verifica os dados recebidos
+
+      const { fullName, birthDate, address, phone, emergencyPhone } = data;
+      const user = auth.currentUser; // Pega o usuário logado
+      if (user) {
+        // Salva os dados adicionais no Firestore
+        await setDoc(doc(db, 'users', user.uid), {
+          fullName,
+          birthDate,
+          address,
+          phone,
+          emergencyPhone,
+        });
+
+        alert('Cadastro complementado com sucesso!');
+        navigation.navigate('Home'); // Redireciona para a tela de Home
+      } else {
+        setError('Usuário não encontrado.');
+      }
     } catch (e: any) {
       setError(e.message);
     }
@@ -24,7 +40,7 @@ export default function CadastroScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Cadastro</Text>
+      <Text style={styles.header}>Complete seu Cadastro</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Controller
@@ -41,15 +57,23 @@ export default function CadastroScreen({ navigation }: any) {
         rules={{ required: 'Nome Completo é obrigatório' }}
       />
 
+      {/* Máscara para Data de Nascimento */}
       <Controller
         control={control}
         render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Data de Nascimento (DD/MM/AAAA)"
+          <InputMask
+            mask="99/99/9999" // Máscara de data DD/MM/AAAA
             value={value}
-            onChangeText={onChange}
-          />
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+          >
+            {(inputProps: any) => (
+              <TextInput
+                {...inputProps}
+                style={styles.input}
+                placeholder="Data de Nascimento"
+              />
+            )}
+          </InputMask>
         )}
         name="birthDate"
         rules={{ required: 'Data de Nascimento é obrigatória' }}
@@ -69,11 +93,12 @@ export default function CadastroScreen({ navigation }: any) {
         rules={{ required: 'Endereço é obrigatório' }}
       />
 
+      {/* Máscara para Telefone */}
       <Controller
         control={control}
         render={({ field: { onChange, value } }) => (
           <InputMask
-            mask="(99) 9 9999-9999"
+            mask="(99) 9 9999-9999" // Máscara para telefone
             value={value}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
           >
@@ -90,11 +115,12 @@ export default function CadastroScreen({ navigation }: any) {
         rules={{ required: 'Telefone é obrigatório' }}
       />
 
+      {/* Máscara para Telefone de Emergência */}
       <Controller
         control={control}
         render={({ field: { onChange, value } }) => (
           <InputMask
-            mask="(99) 9 9999-9999"
+            mask="(99) 9 9999-9999" // Máscara para telefone de emergência
             value={value}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
           >
@@ -109,42 +135,10 @@ export default function CadastroScreen({ navigation }: any) {
         )}
         name="emergencyPhone"
         rules={{ required: 'Telefone de Emergência é obrigatório' }}
-      />
+      />  
 
-      <Controller
-        control={control}
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-        name="email"
-        rules={{ required: 'Email é obrigatório' }}
-      />
-
-      <Controller
-        control={control}
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            secureTextEntry
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-        name="password"
-        rules={{ required: 'Senha é obrigatória' }}
-      />
-
-      <Button title="Cadastrar" onPress={handleSubmit(handleSignup)} />
-
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Text style={styles.switchText}>Já tem uma conta? Faça login</Text>
-      </TouchableOpacity>
+      <Button title="Cadastrar" onPress={handleSubmit(handleCompleteRegistration)} />
+     
     </View>
   );
 }
