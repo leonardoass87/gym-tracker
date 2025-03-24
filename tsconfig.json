@@ -1,6 +1,22 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
-  }
+    "strict": true,
+    "esModuleInterop": true,  // Necessário para trabalhar com módulos ES6
+    "skipLibCheck": true,  // Ignorar verificações de tipos de bibliotecas (evitar erros de tipagem)
+    "forceConsistentCasingInFileNames": true,  // Garantir que os nomes de arquivos sejam consistentes
+    "moduleResolution": "node",  // Resolver módulos no estilo Node.js
+    "resolveJsonModule": true,  // Permite importar arquivos JSON como módulos
+    "lib": ["es6", "dom", "dom.iterable"]  // Corrigido para usar valores válidos
+  },
+  "include": [
+    "node_modules/react-native/index",  // Incluindo react-native
+    "node_modules/expo"  // Incluindo expo, se necessário
+  ],
+  "exclude": [
+    "node_modules/expo/node_modules",  // Excluindo submódulos do expo
+    "node_modules/expo/babel.config.js",
+    "node_modules/expo/metro.config.js",
+    "node_modules/expo/jest.config.js"
+  ]
 }
