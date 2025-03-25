@@ -1,50 +1,59 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase/firebaseConfig'; // Importando o auth
+import { Ionicons } from '@expo/vector-icons'; // Para adicionar ícones
 
 const HomeScreen = ({ navigation }: any) => {
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
-        navigation.navigate('Login'); // Navega de volta para a tela de login após logout
+        // Navega de volta para a tela de login após o logout
+        navigation.replace('Login');  // Usando 'replace' para substituir a tela de login e evitar que o usuário volte com o botão "voltar"
       })
-      .catch((error) => console.log(error));
+      .catch((error) => console.log("Erro no logout: ", error));
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Bem-vindo à Home!</Text>
+      {/* Logo ou Imagem no topo */}
+      <Image source={require('./assets/logo.png')} style={styles.logo} />
 
-      {/* Botão para Cadastro */}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('CadastroScreen')} // Redireciona para a tela de cadastro
-      >
-        <Text style={styles.buttonText}>Cadastro</Text>
-      </TouchableOpacity>
+      {/* Saudação personalizada */}
+      <Text style={styles.header}>Bem-vindo ao Gym Tracker!</Text>
 
-      {/* Botão para Registrar Treino */}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('RegistreSeuTreino')} // Redireciona para a tela de treino
-      >
-        <Text style={styles.buttonText}>Registre seu treino</Text>
-      </TouchableOpacity>
+      {/* Seção de navegação */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Navegação:</Text>
 
-      {/* Botão para Jiu Jitsu */}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('JiuJitsu')} // Redireciona para a tela de Jiu Jitsu
-      >
-        <Text style={styles.buttonText}>Jiu Jitsu</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('CadastroScreen')} // Redireciona para a tela de cadastro
+        >
+          <Text style={styles.buttonText}>Cadastro</Text>
+        </TouchableOpacity>
 
-      {/* Botão de Logout */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('RegistroTreinoScreen')} // Redireciona para a tela de treino
+        >
+          <Text style={styles.buttonText}>Registre seu treino</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('JiuJitsu')} // Redireciona para a tela de Jiu Jitsu
+        >
+          <Text style={styles.buttonText}>Jiu Jitsu</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Botão de Logout com ícone */}
       <TouchableOpacity
-        style={styles.button}
+        style={[styles.button, styles.logoutButton]}
         onPress={handleLogout}
       >
+        <Ionicons name="log-out" size={20} color="#fff" style={styles.icon} />
         <Text style={styles.buttonText}>Logout</Text>
       </TouchableOpacity>
     </View>
@@ -57,35 +66,52 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5', // Fundo claro para a tela
+    backgroundColor: '#f5f5f5',
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
+    resizeMode: 'contain',
   },
   header: {
     fontSize: 24,
     marginBottom: 30,
     fontWeight: 'bold',
-    color: '#333', // Cor do texto do cabeçalho
+    color: '#333',
+  },
+  section: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#007BFF', // Cor de fundo do botão
+    backgroundColor: '#007BFF',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    marginBottom: 20, // Aumentei o espaçamento entre os botões
+    marginBottom: 10,
     borderRadius: 8,
-    width: '80%', // Definindo a largura do botão
-    justifyContent: 'center', // Centralizando ícones e texto
-    height: 50, // Ajustando a altura do botão
-  },
-  icon: {
-    width: 20,
-    height: 20,
-    marginRight: 10, // Espaço entre o ícone e o texto
+    width: '100%',
+    justifyContent: 'center',
+    height: 50,
   },
   buttonText: {
-    color: '#fff', // Cor do texto (branco)
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  logoutButton: {
+    backgroundColor: '#FF3B30', // Cor de destaque para o logout
+  },
+  icon: {
+    marginRight: 10, // Espaço entre o ícone e o texto
   },
 });
 

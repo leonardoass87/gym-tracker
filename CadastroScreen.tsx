@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextInput, Button, View, Text, StyleSheet } from 'react-native';
+import { TextInput, Button, View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useForm, Controller } from 'react-hook-form'; // Importando react-hook-form
 import InputMask from 'react-input-mask'; // Para aplicar a máscara nos campos
 import { auth } from './firebase/firebaseConfig'; // Importando o auth do Firebase
@@ -8,11 +8,13 @@ import { getFirestore, doc, setDoc } from 'firebase/firestore'; // Importando Fi
 const db = getFirestore();
 
 export default function CadastroScreen({ navigation }: any) {
-  const { control, handleSubmit } = useForm();
+  const { control, handleSubmit, formState: { errors } } = useForm();
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);  // Controle de loading
 
   // Função para completar o cadastro
   const handleCompleteRegistration = async (data: any) => {
+    setLoading(true);  // Inicia o loading
     try {
       console.log('Dados do cadastro:', data); // Verifica os dados recebidos
 
@@ -35,6 +37,8 @@ export default function CadastroScreen({ navigation }: any) {
       }
     } catch (e: any) {
       setError(e.message);
+    } finally {
+      setLoading(false);  // Finaliza o loading
     }
   };
 
@@ -56,6 +60,7 @@ export default function CadastroScreen({ navigation }: any) {
         name="fullName"
         rules={{ required: 'Nome Completo é obrigatório' }}
       />
+      {errors.fullName && <Text style={styles.error}>{String(errors.fullName?.message)}</Text>}  {/* Exibindo erro com .message */}
 
       {/* Máscara para Data de Nascimento */}
       <Controller
@@ -78,6 +83,7 @@ export default function CadastroScreen({ navigation }: any) {
         name="birthDate"
         rules={{ required: 'Data de Nascimento é obrigatória' }}
       />
+      {errors.birthDate && <Text style={styles.error}>{String(errors.birthDate?.message)}</Text>}  {/* Exibindo erro com .message */}
 
       <Controller
         control={control}
@@ -92,6 +98,7 @@ export default function CadastroScreen({ navigation }: any) {
         name="address"
         rules={{ required: 'Endereço é obrigatório' }}
       />
+      {errors.address && <Text style={styles.error}>{String(errors.address?.message)}</Text>} {/* Exibindo erro com .message */}
 
       {/* Máscara para Telefone */}
       <Controller
@@ -114,6 +121,7 @@ export default function CadastroScreen({ navigation }: any) {
         name="phone"
         rules={{ required: 'Telefone é obrigatório' }}
       />
+      {errors.phone && <Text style={styles.error}>{String(errors.phone?.message)}</Text>} {/* Exibindo erro com .message */}
 
       {/* Máscara para Telefone de Emergência */}
       <Controller
@@ -135,10 +143,17 @@ export default function CadastroScreen({ navigation }: any) {
         )}
         name="emergencyPhone"
         rules={{ required: 'Telefone de Emergência é obrigatório' }}
-      />  
+      />
+      {errors.emergencyPhone && <Text style={styles.error}>{String(errors.emergencyPhone?.message)}</Text>}  {/* Exibindo erro com .message */}
 
-      <Button title="Cadastrar" onPress={handleSubmit(handleCompleteRegistration)} />
-     
+      {/* Botão de Cadastro com Feedback */}
+      <Button 
+        title={loading ? "Cadastrando..." : "Cadastrar"} 
+        onPress={handleSubmit(handleCompleteRegistration)} 
+        disabled={loading}  // Desabilita o botão durante o carregamento
+      />
+
+      {loading && <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />}
     </View>
   );
 }
@@ -169,8 +184,7 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 15,
   },
-  switchText: {
-    color: '#007BFF',
-    marginTop: 15,
+  loader: {
+    marginTop: 20,
   },
 });

@@ -1,32 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import HomeScreen from './HomeScreen'; // A tela de Home
-import LoginScreen from './LoginScreen'; // Tela de login
-import CadastroScreen from './CadastroScreen'; // Tela de cadastro
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importando AsyncStorage
+import HomeScreen from './HomeScreen';
+import LoginScreen from './LoginScreen';
+import CadastroScreen from './CadastroScreen'; // Cadastro
+import JiuJitsuScreen from './JiuJitsuScreen'; // Jiu Jitsu
+import RegistroTreinoScreen from './RegistroTreinoScreen';  // Sua tela de treino
+import { auth } from './firebase/firebaseConfig';
+import SplashScreen from './SplashScreen'; // Importando o SplashScreen
+import PreparacaoTreinoScreen from './PreparacaoTreinoScreen';
+import ListaDeTreinosScreen from './ListaDeTreinosScreen';
+import DetalhesTreinoScreen from './DetalhesTreinoScreen';
 
 const Stack = createStackNavigator();
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Controle de login
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true); // Estado de carregamento
 
-  // Verificar o estado de login ao carregar o aplicativo
   useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const user = await AsyncStorage.getItem('isLoggedIn');
-        if (user === 'true') {
-          setIsLoggedIn(true); // O usuário está logado
-        } else {
-          setIsLoggedIn(false); // O usuário não está logado
-        }
-      } catch (error) {
-        console.log(error);
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
       }
-    };
-    checkLoginStatus();
-  }, []); // Executar apenas uma vez ao montar o componente
+      setLoading(false); // Defina o loading como false quando a verificação de autenticação terminar
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Se ainda estiver carregando, mostra a tela de Splash
+  if (loading) {
+    return <SplashScreen />;
+  }
 
   return (
     <NavigationContainer>
@@ -34,10 +42,16 @@ export default function App() {
         {!isLoggedIn ? (
           <Stack.Screen name="Login" component={LoginScreen} />
         ) : (
-          <Stack.Screen name="Home" component={HomeScreen} />
+          <>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="CadastroScreen" component={CadastroScreen} />
+            <Stack.Screen name="JiuJitsu" component={JiuJitsuScreen} />
+            <Stack.Screen name="RegistroTreinoScreen" component={RegistroTreinoScreen} />
+            <Stack.Screen name="PreparacaoTreinoScreen" component={PreparacaoTreinoScreen} />
+        <Stack.Screen name="ListaDeTreinosScreen" component={ListaDeTreinosScreen} />
+        <Stack.Screen name="DetalhesTreinoScreen" component={DetalhesTreinoScreen} />
+          </>
         )}
-
-        <Stack.Screen name="CadastroScreen" component={CadastroScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

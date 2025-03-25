@@ -19,7 +19,9 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.seuapp.firebase", 
+      "versionCode": 1                  
     },
     "web": {
       "favicon": "./assets/favicon.png"
