@@ -10,7 +10,7 @@ const db = getFirestore();
 const auth = getAuth(); // Inicializando a instância do Firebase Auth
 
 export default function CadastroScreen({ navigation }: any) {
-  const { control, handleSubmit, formState: { errors } } = useForm();
+  const { control, handleSubmit, formState: { errors }, reset, clearErrors } = useForm();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);  // Controle de loading
 
@@ -35,12 +35,24 @@ export default function CadastroScreen({ navigation }: any) {
         emergencyPhone,
       });
 
-      alert('Cadastro realizado com sucesso!');
-      navigation.navigate('Home'); // Redireciona para a tela de Home
+      // Redireciona automaticamente para a tela "Home"
+      navigation.replace('HomeScreen'); // Usando `replace` para substituir a tela atual
     } catch (error: any) {
-      setError('Erro ao cadastrar usuário: ' + error.message);
+      if (error.code === 'auth/email-already-in-use') {
+        setError('Este email já está registrado. Tente outro email.'); // Mensagem personalizada
+      } else {
+        setError('Erro ao cadastrar usuário: ' + error.message); // Outras mensagens de erro
+      }
     } finally {
       setLoading(false);  // Finaliza o loading
+    }
+  };
+
+  // Função para limpar os erros e resetar o formulário após a tentativa de correção do erro
+  const handleEmailChange = (email: string) => {
+    if (error) {
+      setError('');  // Limpa a mensagem de erro
+      clearErrors(); // Limpa erros antigos de campos, incluindo email
     }
   };
 
@@ -57,7 +69,10 @@ export default function CadastroScreen({ navigation }: any) {
             style={styles.input}
             placeholder="Email"
             value={value}
-            onChangeText={onChange}
+            onChangeText={(email) => {
+              handleEmailChange(email); // Limpa os erros ao tentar corrigir o email
+              onChange(email);
+            }}
           />
         )}
         name="email"
