@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { TextInput, Button, View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useForm, Controller } from 'react-hook-form'; // Importando react-hook-form
-import InputMask from 'react-input-mask'; // Para aplicar a máscara nos campos
-import { auth } from './firebase/firebaseConfig'; // Importando o auth do Firebase
+import { MaskedTextInput } from 'react-native-mask-text'; // Substituindo a lib InputMask pela mais compatível com React Native
+import { getAuth } from 'firebase/auth'; // Correção: 'getAuth' para obter a instância de 'auth'
 import { getFirestore, doc, setDoc } from 'firebase/firestore'; // Importando Firestore para armazenar dados adicionais
+import { createUserWithEmailAndPassword, UserCredential } from 'firebase/auth'; // Importando createUserWithEmailAndPassword
 
 const db = getFirestore();
+const auth = getAuth(); // Inicializando a instância do Firebase Auth
 
 export default function CadastroScreen({ navigation }: any) {
   const { control, handleSubmit, formState: { errors } } = useForm();
@@ -18,25 +20,25 @@ export default function CadastroScreen({ navigation }: any) {
     try {
       console.log('Dados do cadastro:', data); // Verifica os dados recebidos
 
-      const { fullName, birthDate, address, phone, emergencyPhone } = data;
-      const user = auth.currentUser; // Pega o usuário logado
-      if (user) {
-        // Salva os dados adicionais no Firestore
-        await setDoc(doc(db, 'users', user.uid), {
-          fullName,
-          birthDate,
-          address,
-          phone,
-          emergencyPhone,
-        });
+      const { email, password, fullName, birthDate, address, phone, emergencyPhone } = data;
 
-        alert('Cadastro complementado com sucesso!');
-        navigation.navigate('Home'); // Redireciona para a tela de Home
-      } else {
-        setError('Usuário não encontrado.');
-      }
-    } catch (e: any) {
-      setError(e.message);
+      // Cria um novo usuário no Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Salva os dados adicionais no Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        fullName,
+        birthDate,
+        address,
+        phone,
+        emergencyPhone,
+      });
+
+      alert('Cadastro realizado com sucesso!');
+      navigation.navigate('Home'); // Redireciona para a tela de Home
+    } catch (error: any) {
+      setError('Erro ao cadastrar usuário: ' + error.message);
     } finally {
       setLoading(false);  // Finaliza o loading
     }
@@ -47,6 +49,49 @@ export default function CadastroScreen({ navigation }: any) {
       <Text style={styles.header}>Complete seu Cadastro</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
+      {/* Campo de Email */}
+      <Controller
+        control={control}
+        render={({ field: { onChange, value } }) => (
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={value}
+            onChangeText={onChange}
+          />
+        )}
+        name="email"
+        rules={{
+          required: 'Email é obrigatório',
+          pattern: {
+            value: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
+            message: 'Email inválido',
+          },
+        }}
+      />
+      {errors.email && <Text style={styles.error}>{String(errors.email?.message)}</Text>} 
+
+      {/* Campo de Senha */}
+      <Controller
+        control={control}
+        render={({ field: { onChange, value } }) => (
+          <TextInput
+            style={styles.input}
+            placeholder="Senha"
+            secureTextEntry
+            value={value}
+            onChangeText={onChange}
+          />
+        )}
+        name="password"
+        rules={{ 
+          required: 'Senha é obrigatória', 
+          minLength: { value: 6, message: 'Senha deve ter pelo menos 6 caracteres' },
+        }}
+      />
+      {errors.password && <Text style={styles.error}>{String(errors.password?.message)}</Text>} 
+
+      {/* Campo para Nome Completo */}
       <Controller
         control={control}
         render={({ field: { onChange, value } }) => (
@@ -60,31 +105,26 @@ export default function CadastroScreen({ navigation }: any) {
         name="fullName"
         rules={{ required: 'Nome Completo é obrigatório' }}
       />
-      {errors.fullName && <Text style={styles.error}>{String(errors.fullName?.message)}</Text>}  {/* Exibindo erro com .message */}
+      {errors.fullName && <Text style={styles.error}>{String(errors.fullName?.message)}</Text>} 
 
       {/* Máscara para Data de Nascimento */}
       <Controller
         control={control}
         render={({ field: { onChange, value } }) => (
-          <InputMask
+          <MaskedTextInput
             mask="99/99/9999" // Máscara de data DD/MM/AAAA
             value={value}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-          >
-            {(inputProps: any) => (
-              <TextInput
-                {...inputProps}
-                style={styles.input}
-                placeholder="Data de Nascimento"
-              />
-            )}
-          </InputMask>
+            onChangeText={onChange}
+            style={styles.input}
+            placeholder="Data de Nascimento"
+          />
         )}
         name="birthDate"
         rules={{ required: 'Data de Nascimento é obrigatória' }}
       />
-      {errors.birthDate && <Text style={styles.error}>{String(errors.birthDate?.message)}</Text>}  {/* Exibindo erro com .message */}
+      {errors.birthDate && <Text style={styles.error}>{String(errors.birthDate?.message)}</Text>} 
 
+      {/* Campo para Endereço */}
       <Controller
         control={control}
         render={({ field: { onChange, value } }) => (
@@ -98,53 +138,41 @@ export default function CadastroScreen({ navigation }: any) {
         name="address"
         rules={{ required: 'Endereço é obrigatório' }}
       />
-      {errors.address && <Text style={styles.error}>{String(errors.address?.message)}</Text>} {/* Exibindo erro com .message */}
+      {errors.address && <Text style={styles.error}>{String(errors.address?.message)}</Text>} 
 
       {/* Máscara para Telefone */}
       <Controller
         control={control}
         render={({ field: { onChange, value } }) => (
-          <InputMask
+          <MaskedTextInput
             mask="(99) 9 9999-9999" // Máscara para telefone
             value={value}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-          >
-            {(inputProps: any) => (
-              <TextInput
-                {...inputProps}
-                style={styles.input}
-                placeholder="Telefone"
-              />
-            )}
-          </InputMask>
+            onChangeText={onChange}
+            style={styles.input}
+            placeholder="Telefone"
+          />
         )}
         name="phone"
         rules={{ required: 'Telefone é obrigatório' }}
       />
-      {errors.phone && <Text style={styles.error}>{String(errors.phone?.message)}</Text>} {/* Exibindo erro com .message */}
+      {errors.phone && <Text style={styles.error}>{String(errors.phone?.message)}</Text>} 
 
       {/* Máscara para Telefone de Emergência */}
       <Controller
         control={control}
         render={({ field: { onChange, value } }) => (
-          <InputMask
+          <MaskedTextInput
             mask="(99) 9 9999-9999" // Máscara para telefone de emergência
             value={value}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-          >
-            {(inputProps: any) => (
-              <TextInput
-                {...inputProps}
-                style={styles.input}
-                placeholder="Telefone de Emergência"
-              />
-            )}
-          </InputMask>
+            onChangeText={onChange}
+            style={styles.input}
+            placeholder="Telefone de Emergência"
+          />
         )}
         name="emergencyPhone"
         rules={{ required: 'Telefone de Emergência é obrigatório' }}
       />
-      {errors.emergencyPhone && <Text style={styles.error}>{String(errors.emergencyPhone?.message)}</Text>}  {/* Exibindo erro com .message */}
+      {errors.emergencyPhone && <Text style={styles.error}>{String(errors.emergencyPhone?.message)}</Text>} 
 
       {/* Botão de Cadastro com Feedback */}
       <Button 

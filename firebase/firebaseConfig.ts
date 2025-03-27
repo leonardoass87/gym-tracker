@@ -1,7 +1,7 @@
 // Importando os módulos necessários do Firebase SDK
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth"; // Para autenticação do Firebase
-import { getFirestore, doc, setDoc } from "firebase/firestore"; // Importando Firestore
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth'; // Para autenticação do Firebase
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore'; // Certifique-se de que 'getDoc' está importado
 
 // Configuração do Firebase (substitua pelos seus dados)
 const firebaseConfig = {
@@ -24,4 +24,4 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Exportando as instâncias de auth e db para uso no app
-export { auth, db, doc, setDoc };
+export { app, auth, db, doc, setDoc, getDoc }; // Agora 'getDoc' está exportado corretamente

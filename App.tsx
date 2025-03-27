@@ -43,8 +43,7 @@ export default function App() {
           <Stack.Screen name="Login" component={LoginScreen} />
         ) : (
           <>
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="CadastroScreen" component={CadastroScreen} />
+            <Stack.Screen name="HomeScreen" component={HomeScreen} />
             <Stack.Screen name="JiuJitsu" component={JiuJitsuScreen} />
             <Stack.Screen name="RegistroTreinoScreen" component={RegistroTreinoScreen} />
             <Stack.Screen name="PreparacaoTreinoScreen" component={PreparacaoTreinoScreen} />
@@ -52,6 +51,7 @@ export default function App() {
         <Stack.Screen name="DetalhesTreinoScreen" component={DetalhesTreinoScreen} />
           </>
         )}
+        <Stack.Screen name="CadastroScreen" component={CadastroScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

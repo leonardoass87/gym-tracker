@@ -14,7 +14,7 @@ export default function LoginScreen({ navigation }: any) {
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigation.navigate('Home'); // Redireciona para a Home após login bem-sucedido
+      navigation.navigate('HomeScreen'); // Redireciona para a Home após login bem-sucedido
     } catch (e: any) {
       setError(e.message);
     }
