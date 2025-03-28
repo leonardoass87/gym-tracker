@@ -1,54 +1,47 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { signOut } from 'firebase/auth';
-import { auth } from './firebase/firebaseConfig'; // Importando o auth
-import { Ionicons } from '@expo/vector-icons'; // Para adicionar ícones
+import { auth } from './firebase/firebaseConfig';
+import { Ionicons } from '@expo/vector-icons';
 
 const HomeScreen = ({ navigation }: any) => {
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
-        // Navega de volta para a tela de login após o logout
-        navigation.replace('Login');  // Usando 'replace' para substituir a tela de login e evitar que o usuário volte com o botão "voltar"
+        navigation.replace('Login');
       })
       .catch((error) => console.log("Erro no logout: ", error));
   };
 
   return (
     <View style={styles.container}>
-      {/* Logo ou Imagem no topo */}
-      <Image source={require('./assets/logo.png')} style={styles.logo} />
-
-      {/* Saudação personalizada */}
       <Text style={styles.header}>Bem-vindo ao Gym Tracker!</Text>
 
-      {/* Seção de navegação */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Navegação:</Text>
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('CadastroScreen')} // Redireciona para a tela de cadastro
+          onPress={() => navigation.navigate('Perfil')} // ✅ Agora vai para "Perfil"
         >
-          <Text style={styles.buttonText}>Cadastro</Text>
+          <Text style={styles.buttonText}>Perfil</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('RegistroTreinoScreen')} // Redireciona para a tela de treino
+          onPress={() => navigation.navigate('RegistroTreinoScreen')}
         >
           <Text style={styles.buttonText}>Registre seu treino</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('JiuJitsu')} // Redireciona para a tela de Jiu Jitsu
+          onPress={() => navigation.navigate('JiuJitsu')}
         >
           <Text style={styles.buttonText}>Jiu Jitsu</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Botão de Logout com ícone */}
       <TouchableOpacity
         style={[styles.button, styles.logoutButton]}
         onPress={handleLogout}
@@ -65,24 +58,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: Platform.OS === 'web' ? 40 : 20,
     backgroundColor: '#f5f5f5',
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
-    resizeMode: 'contain',
   },
   header: {
     fontSize: 24,
     marginBottom: 30,
     fontWeight: 'bold',
     color: '#333',
+    textAlign: 'center',
   },
   section: {
-    width: '100%',
+    width: Platform.OS === 'web' ? '50%' : '100%',
     marginBottom: 20,
+    alignItems: 'center',
   },
   sectionTitle: {
     fontSize: 18,
@@ -101,6 +90,7 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     height: 50,
+    maxWidth: Platform.OS === 'web' ? 300 : '100%',
   },
   buttonText: {
     color: '#fff',
@@ -108,10 +98,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   logoutButton: {
-    backgroundColor: '#FF3B30', // Cor de destaque para o logout
+    backgroundColor: '#FF3B30',
   },
   icon: {
-    marginRight: 10, // Espaço entre o ícone e o texto
+    marginRight: 10,
   },
 });
 

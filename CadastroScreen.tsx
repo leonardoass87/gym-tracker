@@ -1,58 +1,64 @@
 import React, { useState } from 'react';
 import { TextInput, Button, View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { useForm, Controller } from 'react-hook-form'; // Importando react-hook-form
-import { MaskedTextInput } from 'react-native-mask-text'; // Substituindo a lib InputMask pela mais compatível com React Native
-import { getAuth } from 'firebase/auth'; // Correção: 'getAuth' para obter a instância de 'auth'
-import { getFirestore, doc, setDoc } from 'firebase/firestore'; // Importando Firestore para armazenar dados adicionais
-import { createUserWithEmailAndPassword, UserCredential } from 'firebase/auth'; // Importando createUserWithEmailAndPassword
+import { useForm, Controller } from 'react-hook-form';
+import { MaskedTextInput } from 'react-native-mask-text';
+import { getAuth, createUserWithEmailAndPassword, UserCredential } from 'firebase/auth';
+import { getFirestore, doc, setDoc, query, where, collection, getDocs } from 'firebase/firestore';
 
 const db = getFirestore();
-const auth = getAuth(); // Inicializando a instância do Firebase Auth
+const auth = getAuth();
 
 export default function CadastroScreen({ navigation }: any) {
   const { control, handleSubmit, formState: { errors }, reset, clearErrors } = useForm();
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);  // Controle de loading
+  const [loading, setLoading] = useState(false);
 
-  // Função para completar o cadastro
   const handleCompleteRegistration = async (data: any) => {
-    setLoading(true);  // Inicia o loading
+    setLoading(true);
+    setError('');
+
     try {
-      console.log('Dados do cadastro:', data); // Verifica os dados recebidos
+      const { email, password, fullName, birthDate, address, phone, emergencyPhone, username } = data;
 
-      const { email, password, fullName, birthDate, address, phone, emergencyPhone } = data;
+      // Verifica se o username já existe
+      const q = query(collection(db, 'users'), where('username', '==', username));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        setError('Este nome de usuário já está em uso. Tente outro.');
+        setLoading(false);
+        return;
+      }
 
-      // Cria um novo usuário no Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // Criação do usuário no Firebase Auth
+      const userCredential: UserCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Salva os dados adicionais no Firestore
+      // Salvar os dados adicionais no Firestore
       await setDoc(doc(db, 'users', user.uid), {
         fullName,
         birthDate,
         address,
         phone,
         emergencyPhone,
+        username,
       });
 
-      // Redireciona automaticamente para a tela "Home"
-      navigation.replace('HomeScreen'); // Usando `replace` para substituir a tela atual
+      navigation.replace('Home');
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
-        setError('Este email já está registrado. Tente outro email.'); // Mensagem personalizada
+        setError('Este email já está registrado. Tente outro email.');
       } else {
-        setError('Erro ao cadastrar usuário: ' + error.message); // Outras mensagens de erro
+        setError('Erro ao cadastrar usuário: ' + error.message);
       }
     } finally {
-      setLoading(false);  // Finaliza o loading
+      setLoading(false);
     }
   };
 
-  // Função para limpar os erros e resetar o formulário após a tentativa de correção do erro
   const handleEmailChange = (email: string) => {
     if (error) {
-      setError('');  // Limpa a mensagem de erro
-      clearErrors(); // Limpa erros antigos de campos, incluindo email
+      setError('');
+      clearErrors();
     }
   };
 
@@ -61,20 +67,9 @@ export default function CadastroScreen({ navigation }: any) {
       <Text style={styles.header}>Complete seu Cadastro</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      {/* Campo de Email */}
+      {/* Email */}
       <Controller
         control={control}
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={value}
-            onChangeText={(email) => {
-              handleEmailChange(email); // Limpa os erros ao tentar corrigir o email
-              onChange(email);
-            }}
-          />
-        )}
         name="email"
         rules={{
           required: 'Email é obrigatório',
@@ -83,12 +78,29 @@ export default function CadastroScreen({ navigation }: any) {
             message: 'Email inválido',
           },
         }}
+        render={({ field: { onChange, value } }) => (
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={value}
+            onChangeText={(email) => {
+              handleEmailChange(email);
+              onChange(email);
+            }}
+            autoCapitalize="none"
+          />
+        )}
       />
-      {errors.email && <Text style={styles.error}>{String(errors.email?.message)}</Text>} 
+      {errors.email && <Text style={styles.error}>{String(errors.email?.message)}</Text>}
 
-      {/* Campo de Senha */}
+      {/* Senha */}
       <Controller
         control={control}
+        name="password"
+        rules={{
+          required: 'Senha é obrigatória',
+          minLength: { value: 6, message: 'Senha deve ter pelo menos 6 caracteres' },
+        }}
         render={({ field: { onChange, value } }) => (
           <TextInput
             style={styles.input}
@@ -98,17 +110,14 @@ export default function CadastroScreen({ navigation }: any) {
             onChangeText={onChange}
           />
         )}
-        name="password"
-        rules={{ 
-          required: 'Senha é obrigatória', 
-          minLength: { value: 6, message: 'Senha deve ter pelo menos 6 caracteres' },
-        }}
       />
-      {errors.password && <Text style={styles.error}>{String(errors.password?.message)}</Text>} 
+      {errors.password && <Text style={styles.error}>{String(errors.password?.message)}</Text>}
 
-      {/* Campo para Nome Completo */}
+      {/* Nome Completo */}
       <Controller
         control={control}
+        name="fullName"
+        rules={{ required: 'Nome Completo é obrigatório' }}
         render={({ field: { onChange, value } }) => (
           <TextInput
             style={styles.input}
@@ -117,31 +126,56 @@ export default function CadastroScreen({ navigation }: any) {
             onChangeText={onChange}
           />
         )}
-        name="fullName"
-        rules={{ required: 'Nome Completo é obrigatório' }}
       />
-      {errors.fullName && <Text style={styles.error}>{String(errors.fullName?.message)}</Text>} 
+      {errors.fullName && <Text style={styles.error}>{String(errors.fullName?.message)}</Text>}
 
-      {/* Máscara para Data de Nascimento */}
+      {/* Username */}
       <Controller
         control={control}
+        name="username"
+        rules={{
+          required: 'Username é obrigatório',
+          minLength: { value: 3, message: 'Mínimo de 3 caracteres' },
+          maxLength: { value: 15, message: 'Máximo de 15 caracteres' },
+          pattern: {
+            value: /^[a-z0-9._]+$/,
+            message: 'Use apenas letras minúsculas, números, ponto ou underline',
+          },
+        }}
+        render={({ field: { onChange, value } }) => (
+          <TextInput
+            style={styles.input}
+            placeholder="Nome de usuário (ex: leoalvesjf)"
+            value={value}
+            onChangeText={onChange}
+            autoCapitalize="none"
+          />
+        )}
+      />
+      {errors.username && <Text style={styles.error}>{String(errors.username?.message)}</Text>}
+
+      {/* Data de nascimento */}
+      <Controller
+        control={control}
+        name="birthDate"
+        rules={{ required: 'Data de Nascimento é obrigatória' }}
         render={({ field: { onChange, value } }) => (
           <MaskedTextInput
-            mask="99/99/9999" // Máscara de data DD/MM/AAAA
+            mask="99/99/9999"
             value={value}
             onChangeText={onChange}
             style={styles.input}
             placeholder="Data de Nascimento"
           />
         )}
-        name="birthDate"
-        rules={{ required: 'Data de Nascimento é obrigatória' }}
       />
-      {errors.birthDate && <Text style={styles.error}>{String(errors.birthDate?.message)}</Text>} 
+      {errors.birthDate && <Text style={styles.error}>{String(errors.birthDate?.message)}</Text>}
 
-      {/* Campo para Endereço */}
+      {/* Endereço */}
       <Controller
         control={control}
+        name="address"
+        rules={{ required: 'Endereço é obrigatório' }}
         render={({ field: { onChange, value } }) => (
           <TextInput
             style={styles.input}
@@ -150,50 +184,47 @@ export default function CadastroScreen({ navigation }: any) {
             onChangeText={onChange}
           />
         )}
-        name="address"
-        rules={{ required: 'Endereço é obrigatório' }}
       />
-      {errors.address && <Text style={styles.error}>{String(errors.address?.message)}</Text>} 
+      {errors.address && <Text style={styles.error}>{String(errors.address?.message)}</Text>}
 
-      {/* Máscara para Telefone */}
+      {/* Telefone */}
       <Controller
         control={control}
+        name="phone"
+        rules={{ required: 'Telefone é obrigatório' }}
         render={({ field: { onChange, value } }) => (
           <MaskedTextInput
-            mask="(99) 9 9999-9999" // Máscara para telefone
+            mask="(99) 9 9999-9999"
             value={value}
             onChangeText={onChange}
             style={styles.input}
             placeholder="Telefone"
           />
         )}
-        name="phone"
-        rules={{ required: 'Telefone é obrigatório' }}
       />
-      {errors.phone && <Text style={styles.error}>{String(errors.phone?.message)}</Text>} 
+      {errors.phone && <Text style={styles.error}>{String(errors.phone?.message)}</Text>}
 
-      {/* Máscara para Telefone de Emergência */}
+      {/* Telefone de Emergência */}
       <Controller
         control={control}
+        name="emergencyPhone"
+        rules={{ required: 'Telefone de Emergência é obrigatório' }}
         render={({ field: { onChange, value } }) => (
           <MaskedTextInput
-            mask="(99) 9 9999-9999" // Máscara para telefone de emergência
+            mask="(99) 9 9999-9999"
             value={value}
             onChangeText={onChange}
             style={styles.input}
             placeholder="Telefone de Emergência"
           />
         )}
-        name="emergencyPhone"
-        rules={{ required: 'Telefone de Emergência é obrigatório' }}
       />
-      {errors.emergencyPhone && <Text style={styles.error}>{String(errors.emergencyPhone?.message)}</Text>} 
+      {errors.emergencyPhone && <Text style={styles.error}>{String(errors.emergencyPhone?.message)}</Text>}
 
-      {/* Botão de Cadastro com Feedback */}
-      <Button 
-        title={loading ? "Cadastrando..." : "Cadastrar"} 
-        onPress={handleSubmit(handleCompleteRegistration)} 
-        disabled={loading}  // Desabilita o botão durante o carregamento
+      <Button
+        title={loading ? "Cadastrando..." : "Cadastrar"}
+        onPress={handleSubmit(handleCompleteRegistration)}
+        disabled={loading}
       />
 
       {loading && <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />}
